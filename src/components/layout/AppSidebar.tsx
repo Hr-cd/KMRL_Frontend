@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Settings } from "lucide-react";
+import { LayoutDashboard, FileText, Settings, MessageSquare } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
+  { title: "AI Chat", url: "/chat", icon: MessageSquare },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

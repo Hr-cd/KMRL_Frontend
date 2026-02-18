@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Settings } from "lucide-react";
+import { LayoutDashboard, FileText, MessageSquare, FileCheck, Quote } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -15,7 +15,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "AI - Dude", url: "/ai-dude", icon:  MessageSquare},
 ];
 
 export function AppSidebar() {
@@ -23,11 +23,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-sidebar-primary flex items-center justify-center font-display font-bold text-sidebar-primary-foreground text-sm">
-            KM
-          </div>
+          <img src="/image.png" alt="KMRL Logo" className="h-9 w-9 rounded-lg" />
           <div>
-            <h2 className="font-display font-bold text-sm text-sidebar-primary-foreground leading-tight">KMRL</h2>
+            <h2 className="font-display font-bold text-sm text-sidebar-primary-foreground leading-tight">Kochi Metro Rail Limited</h2>
             <p className="text-xs text-sidebar-foreground/60">Document Manager</p>
           </div>
         </div>
@@ -35,9 +33,6 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider mb-1">
-            Navigation
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (

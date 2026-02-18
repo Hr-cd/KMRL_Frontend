@@ -21,8 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/documents/StatusBadge";
 import { DocumentUploadDialog } from "@/components/documents/DocumentUploadDialog";
 import { DocumentDetailDialog } from "@/components/documents/DocumentDetailDialog";
-import { fetchDocuments } from "@/lib/api";
-import type { KMRLDocument, DocumentStatus, DocumentCategory } from "@/lib/mock-data";
+import { getDocuments } from "@/lib/api";
+import type { KMRLDocument} from "@/lib/utils";
 
 const Documents = () => {
   const [documents, setDocuments] = useState<KMRLDocument[]>([]);
@@ -32,21 +32,80 @@ const Documents = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detailDoc, setDetailDoc] = useState<KMRLDocument | null>(null);
 
+  function normalizeDoc(d: any): KMRLDocument {
+    return {
+      id: String(d.id ?? ""),
+      name: d.name ?? "",
+      status: d.status ?? "pending",
+      uploadedBy: d.uploadedBy ?? "Unknown",
+      uploadedAt: d.uploadedAt ?? "",
+      category: d.category ?? "Unknown",
+      description: d.description ?? "",
+      fileSize: d.fileSize ?? "",
+      tags: d.tags ?? [],
+      comments: d.comments ?? [],
+    };
+  }
+
+  const loadDocuments = async () => {
+    try {
+      const data = await getDocuments();
+      setDocuments(data.map(normalizeDoc));
+      console.log("API RESPONSE:", data);
+    } catch (err) {
+      console.error("Failed loading docs", err);
+    }
+  };
+
   useEffect(() => {
-    fetchDocuments().then(setDocuments);
+    loadDocuments();
   }, []);
+  
 
   const filtered = useMemo(() => {
     return documents.filter((d) => {
-      const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-        d.uploadedBy.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = (d.name ?? "").toLowerCase().includes(search.toLowerCase()) || (d.uploadedBy ?? "").toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter === "all" || d.status === statusFilter;
       const matchCategory = categoryFilter === "all" || d.category === categoryFilter;
       return matchSearch && matchStatus && matchCategory;
     });
   }, [documents, search, statusFilter, categoryFilter]);
 
-  const toggleSelect = (id: string) => {
+  const handleDelete = async (ids: Set<string>) => {
+    if (!confirm(`Are you sure you want to delete ${ids.size} document(s)? This action cannot be undone.`)) {
+      return;
+    }
+    const data = await getDocuments();
+    setDocuments(
+      data.map((d: any) => ({
+        ...d,
+        id: String(d.id),
+      }))
+    );
+    setSelected(new Set());
+  };
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selected.size} document(s)?`)) return;
+
+    try {
+      const { deleteDocument } = await import("@/lib/api");
+      await Promise.all(Array.from(selected).map((id) => deleteDocument(id)));
+      setSelected(new Set());
+      await loadDocuments();
+    } catch (err) {
+      console.error("Failed to delete documents", err);
+    }
+  };
+
+  const toggleSelect = async (id: string) => {
+    const data = await getDocuments();
+    setDocuments(
+      data.map((d: any) => ({
+        ...d,
+        id: String(d.id),
+      }))
+    );
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -69,7 +128,7 @@ const Documents = () => {
           <h1 className="text-2xl font-display font-bold">Documents</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} documents</p>
         </div>
-        <DocumentUploadDialog />
+        <DocumentUploadDialog onUploadSuccess={loadDocuments}/>
       </div>
 
       {/* Filters */}
@@ -101,13 +160,13 @@ const Documents = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {["Policy", "Report", "Contract", "Invoice", "Memo", "Circular", "Technical", "HR"].map((c) => (
+            {["tender", "safety_report", "incident_report", "project_update", "financial", "maintenance", "legal", "operations", "general"].map((c) => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         {selected.size > 0 && (
-          <Button variant="destructive" size="sm" className="gap-1.5">
+          <Button variant="destructive" size="sm" onClick={() => deleteSelected()} className="gap-1.5">
             <Trash2 className="h-3.5 w-3.5" /> Delete ({selected.size})
           </Button>
         )}
@@ -145,11 +204,11 @@ const Documents = () => {
                     onCheckedChange={() => toggleSelect(doc.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium max-w-[260px] truncate">{doc.name}</TableCell>
+                <TableCell className="font-medium max-w-[260px] truncate">{(doc.name ?? "").replace(/\.[^/.]+$/, "")}</TableCell>
                 <TableCell className="text-muted-foreground">{doc.category}</TableCell>
                 <TableCell><StatusBadge status={doc.status} /></TableCell>
                 <TableCell className="text-muted-foreground">{doc.uploadedBy}</TableCell>
-                <TableCell className="text-muted-foreground">{doc.uploadedAt}</TableCell>
+                <TableCell className="text-muted-foreground">{doc.uploadedAt ? new Date(doc.uploadedAt).toISOString().split("T")[0] : ""}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <Eye className="h-4 w-4" />
@@ -172,6 +231,7 @@ const Documents = () => {
         document={detailDoc}
         open={!!detailDoc}
         onOpenChange={(open) => !open && setDetailDoc(null)}
+        onActionSuccess={loadDocuments}
       />
     </div>
   );

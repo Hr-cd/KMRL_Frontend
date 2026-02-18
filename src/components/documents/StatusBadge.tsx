@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { DocumentStatus } from "@/lib/mock-data";
+import type { DocumentStatus } from "@/lib/utils";
 
 const variants: Record<DocumentStatus, { className: string; label: string }> = {
   pending: { className: "bg-warning/15 text-warning border-warning/30 hover:bg-warning/20", label: "Pending" },
@@ -8,6 +8,14 @@ const variants: Record<DocumentStatus, { className: string; label: string }> = {
 };
 
 export function StatusBadge({ status }: { status: DocumentStatus }) {
-  const v = variants[status];
-  return <Badge variant="outline" className={v.className}>{v.label}</Badge>;
+  const v = variants[status] ?? {
+    className: "bg-muted text-muted-foreground",
+    label: "Unknown",
+  };
+
+  return (
+    <Badge variant="outline" className={v.className}>
+      {v.label}
+    </Badge>
+  );
 }

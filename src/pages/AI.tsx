@@ -19,7 +19,7 @@ interface Document {
 }
 
 async function fetchDocuments(): Promise<Document[]> {
-  const res = await fetch("http://localhost:8000/api/documents");
+  const res = await fetch("https://kmrl-backend-klzu.onrender.com/api/documents");
   if (!res.ok) throw new Error("Failed to fetch documents");
   const data = await res.json();
   console.log("Documents fetched:", data);
